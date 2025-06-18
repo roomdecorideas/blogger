@@ -14,6 +14,38 @@ document.addEventListener('DOMContentLoaded', function() {
     const endDate = document.getElementById('end-date');
     const intervalHours = document.getElementById('interval-hours');
 
+    // --- BAGIAN BARU: Logika untuk menyimpan & memuat pengaturan GitHub ---
+
+    // Saat halaman dimuat, coba isi kolom dari localStorage
+    function loadGitHubSettingsFromStorage() {
+        const savedToken = localStorage.getItem('githubApiToken');
+        const savedRepo = localStorage.getItem('githubRepoName');
+
+        if (savedToken) {
+            tokenInput.value = savedToken;
+        }
+        if (savedRepo) {
+            repoInput.value = savedRepo;
+        }
+        console.log('Pengaturan GitHub dimuat dari localStorage.');
+    }
+
+    // Simpan token ke localStorage setiap kali pengguna mengetik
+    tokenInput.addEventListener('input', () => {
+        localStorage.setItem('githubApiToken', tokenInput.value);
+    });
+
+    // Simpan nama repo ke localStorage setiap kali pengguna mengetik
+    repoInput.addEventListener('input', () => {
+        localStorage.setItem('githubRepoName', repoInput.value);
+    });
+    
+    // Panggil fungsi untuk memuat data saat halaman pertama kali dibuka
+    loadGitHubSettingsFromStorage();
+
+    // --- AKHIR BAGIAN BARU ---
+
+
     // Store file SHAs for updates
     let fileSHAs = {};
 
@@ -43,7 +75,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!response.ok) {
                 throw new Error(`GitHub API Error: ${response.status} ${response.statusText}`);
             }
-            // Some responses have no content (e.g., 204 No Content)
             if (response.status === 204) {
                 return {};
             }
@@ -61,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
         statusDiv.style.color = isError ? '#dc3545' : '#212529';
     }
 
-    // Helper untuk mengubah string ke Base64 (diperlukan GitHub API)
+    // Helper untuk mengubah string ke Base64
     function toBase64(str) {
         return btoa(unescape(encodeURIComponent(str)));
     }
@@ -85,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await githubApi(`/contents/${filename}`);
             if (data && data.content) {
                 element.value = fromBase64(data.content);
-                fileSHAs[filename] = data.sha; // Simpan SHA untuk update
+                fileSHAs[filename] = data.sha;
                 logStatus(`Loaded ${filename}...`);
             } else {
                 logStatus(`Gagal memuat ${filename}. Apakah file ada di repo?`, true);
@@ -94,7 +125,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Load state.json
         const stateData = await githubApi('/contents/state.json');
         if(stateData && stateData.content){
             const state = JSON.parse(fromBase64(stateData.content));
@@ -118,15 +148,14 @@ document.addEventListener('DOMContentLoaded', function() {
     saveBtn.addEventListener('click', async () => {
         logStatus('Menyimpan pengaturan ke GitHub...');
         
-        // Update keyword.txt
         await updateFile('keyword.txt', keywordList.value, 'Update keywords via Control Panel');
-        
-        // Update email.txt
         await updateFile('email.txt', bloggerEmail.value, 'Update blogger email via Control Panel');
 
-        // Update state.json
+        const stateData = await githubApi('/contents/state.json');
+        const currentState = JSON.parse(fromBase64(stateData.content));
+
         const newState = {
-            lastPostedIndex: -1, // Reset saat pengaturan disimpan
+            lastPostedIndex: currentState.lastPostedIndex, // Pertahankan lastPostedIndex saat ini
             startDate: startDate.value,
             endDate: endDate.value,
             publishIntervalHours: parseInt(intervalHours.value, 10)
@@ -140,11 +169,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const body = {
             message: message,
             content: toBase64(content),
-            sha: fileSHAs[path] // SHA wajib ada untuk update file
+            sha: fileSHAs[path]
         };
         const result = await githubApi(`/contents/${path}`, 'PUT', body);
         if(result && result.content) {
-            fileSHAs[path] = result.content.sha; // Update SHA setelah berhasil
+            fileSHAs[path] = result.content.sha;
         }
     }
     
@@ -154,11 +183,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         logStatus('Mengirim perintah untuk menjalankan workflow...');
         const result = await githubApi('/actions/workflows/blogger_post.yml/dispatches', 'POST', {
-            ref: 'main' // Ganti 'main' jika nama branch utama Anda berbeda
+            ref: 'main'
         });
 
         if (result !== null) {
             logStatus('Perintah berhasil dikirim! Cek tab "Actions" di repository GitHub Anda untuk melihat prosesnya.');
         }
     });
+
+    // --- Perbaikan kecil pada logika Simpan Pengaturan ---
+    // Saat menyimpan, kita harus mempertahankan 'lastPostedIndex' yang ada, bukan meresetnya.
+    // Kode di atas sudah diperbaiki untuk ini.
 });
