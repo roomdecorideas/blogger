@@ -22,6 +22,8 @@ function capitalizeEachWord(str) {
 
 async function main() {
     try {
+        console.log("Skrip dimulai...");
+
         // --- 1. Membaca semua file yang dibutuhkan ---
         const statePath = path.join(__dirname, '..', 'state.json');
         const keywordPath = path.join(__dirname, '..', 'keyword.txt');
@@ -33,40 +35,30 @@ async function main() {
         const bloggerEmail = (await fs.readFile(emailPath, 'utf8')).trim();
         const articleTemplate = await fs.readFile(articlePath, 'utf8');
 
-        // --- 2. Validasi Tanggal dan Interval ---
-        const now = new Date();
-        const startDate = new Date(state.startDate);
-        const endDate = new Date(state.endDate);
-
-        if (now < startDate || now > endDate) {
-            console.log("Di luar rentang tanggal posting. Skrip dihentikan.");
-            return;
-        }
-
-        // --- 3. Menentukan Keyword Selanjutnya ---
+        // --- 2. LOGIKA BARU: Langsung ambil keyword berikutnya ---
         const nextIndex = state.lastPostedIndex + 1;
         if (nextIndex >= keywords.length) {
             console.log("Semua keyword sudah diposting. Selesai.");
-            return;
+            return; // Hentikan jika semua keyword sudah terpakai
         }
 
         const keyword = keywords[nextIndex].trim();
         const seoTitle = `5 Ide ${capitalizeEachWord(keyword)} Terbaik Tahun Ini`;
+        console.log(`Mempersiapkan posting untuk keyword: "${keyword}"`);
 
-        // --- 4. Membuat Konten dari Template Spintax ---
+        // --- 3. Membuat Konten dari Template Spintax ---
         let finalArticle = parseSpintax(articleTemplate);
         finalArticle = finalArticle.replace(/%%KEYWORD%%/g, capitalizeEachWord(keyword));
         finalArticle = finalArticle.replace(/%%TITLE%%/g, seoTitle);
 
-        // --- 5. Mengirim Email ke Blogger ---
-        // Gunakan GitHub Secrets untuk menyimpan kredensial email Anda!
+        // --- 4. Mengirim Email ke Blogger ---
         const transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com', // Ganti dengan host SMTP Anda
+            host: 'smtp.gmail.com',
             port: 587,
             secure: false,
             auth: {
-                user: process.env.SMTP_USER, // Variabel dari GitHub Secrets
-                pass: process.env.SMTP_PASS  // Variabel dari GitHub Secrets
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS
             }
         });
 
@@ -74,20 +66,20 @@ async function main() {
             from: `"Bot Blogger Kamu" <${process.env.SMTP_USER}>`,
             to: bloggerEmail,
             subject: seoTitle,
-            html: finalArticle.replace(/\n/g, '<br>') // Ubah baris baru menjadi tag <br>
+            html: finalArticle.replace(/\n/g, '<br>')
         };
 
         await transporter.sendMail(mailOptions);
-        console.log(`Email untuk keyword "${keyword}" berhasil dikirim ke ${bloggerEmail}`);
+        console.log(`Email untuk keyword "${keyword}" berhasil dikirim.`);
 
-        // --- 6. Memperbarui State ---
+        // --- 5. Memperbarui State ---
         state.lastPostedIndex = nextIndex;
         await fs.writeFile(statePath, JSON.stringify(state, null, 2));
-        console.log(`File state.json berhasil diperbarui. Indeks terakhir: ${nextIndex}`);
+        console.log(`File state.json berhasil diperbarui. Indeks terakhir sekarang: ${nextIndex}`);
 
     } catch (error) {
         console.error("Terjadi kesalahan:", error);
-        process.exit(1); // Keluar dengan kode error agar GitHub Action gagal
+        process.exit(1);
     }
 }
 
