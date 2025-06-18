@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blogger Auto-Poster | Control Panel</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; padding: 20px; max-width: 800px; margin: auto; background-color: #f8f9fa; }
+        .container { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1, h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        label { display: block; margin-top: 15px; font-weight: bold; }
+        input[type="text"], input[type="date"], input[type="number"], textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        textarea { min-height: 200px; font-family: monospace; }
+        button { background-color: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 20px; font-size: 16px; transition: background-color 0.2s; }
+        button:hover { background-color: #0056b3; }
+        button.secondary { background-color: #6c757d; }
+        button.secondary:hover { background-color: #545b62; }
+        button.danger { background-color: #dc3545; }
+        button.danger:hover { background-color: #b02a37; }
+        #status { margin-top: 20px; padding: 15px; border-radius: 5px; background-color: #e9ecef; border: 1px solid #ced4da; white-space: pre-wrap; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Blogger Auto-Poster Control Panel</h1>
+        <p>Gunakan panel ini untuk mengelola dan menjalankan bot posting otomatis Anda.</p>
+
+        <h2>1. Pengaturan GitHub</h2>
+        <label for="github-token">GitHub Personal Access Token (PAT):</label>
+        <input type="password" id="github-token" placeholder="Masukkan PAT dengan izin 'repo' dan 'workflow'">
+
+        <label for="repo-name">Nama Repository (contoh: username/nama-repo):</label>
+        <input type="text" id="repo-name" placeholder="misal: john-doe/blogger-bot">
+
+        <button id="load-btn" class="secondary">Load Pengaturan dari Repo</button>
+
+        <hr style="margin-top: 30px;">
+
+        <h2>2. Konfigurasi Bot</h2>
+        <div id="bot-settings" style="display:none;">
+            <label for="keyword-list">Daftar Keyword (satu per baris):</label>
+            <textarea id="keyword-list"></textarea>
+
+            <label for="blogger-email">Email Tujuan Blogger:</label>
+            <input type="text" id="blogger-email">
+
+            <label for="start-date">Tanggal Mulai:</label>
+            <input type="date" id="start-date">
+
+            <label for="end-date">Tanggal Selesai:</label>
+            <input type="date" id="end-date">
+            
+            <label for="interval-hours">Interval Posting (jam):</label>
+            <input type="number" id="interval-hours" min="1" value="6">
+
+            <button id="save-btn">Simpan Semua Pengaturan ke GitHub</button>
+            <button id="run-btn" class="danger">Jalankan Posting Manual (1x)</button>
+        </div>
+
+        <h2>Status & Log</h2>
+        <div id="status">Status: Silakan masukkan info repository dan PAT, lalu klik "Load".</div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
