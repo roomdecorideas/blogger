@@ -1,0 +1,12 @@
+{
+  "name": "blogger-auto-poster",
+  "version": "1.0.0",
+  "description": "Auto post to Blogger via email using GitHub Actions",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "node src/main.js"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.13"
+  }
+}
